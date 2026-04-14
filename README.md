@@ -5,9 +5,12 @@ Modelar as classes de acordo com as colunas de filmes e cinemas
 Fazer uma varredura pelo arquivo de filmes e de cinemas e passar eles para a memória;
 Cada linha representa um filme no arquivo filmesCrop.txt
 Cada linha representa um cinema no arquivo cinemas(1).txt
+Montar uma tabela hash, onde o tconst vai ser normalizado e virará o novo índice
+
 
 # Terceiro Passo
 Organizar os dados com técnicas de ordenação
+Trabalhar com  a tabela de índices, não de classes
 
 # Quarto Passo
 Implementar os filtros listados (Uso de operadores lógicos "e" ou "ou")
