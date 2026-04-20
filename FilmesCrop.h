@@ -6,20 +6,21 @@
 class FilmesCrop {
 
 private:
-    std::string tconst, titleType, primaryTitle, originalTitle, genres;
+    std::string titleType, primaryTitle, originalTitle;
+    std::vector<std::string> genres;
     bool isAdult;
-    int startYear, runtimeMinutes;
+    int tconst, startYear, runtimeMinutes;
 
 public:
     FilmesCrop();
 
 
-    FilmesCrop(const std::string &tconst, const std::string &title_type, const std::string &primary_title,
-               const std::string &original_title, const std::string &genres, bool is_adult, int start_year,
+    FilmesCrop(int tconst ,const std::string &title_type, const std::string &primary_title,
+               const std::string &original_title, const std::string &raw_genres, bool is_adult, int start_year,
                int runtime_minutes);
 
-    std::string get_tconst() const;
-    void set_tconst(const std::string &tconst);
+    int get_tconst() const;
+    void set_tconst(const int tconst);
 
     std::string get_title_type() const;
     void set_title_type(const std::string &title_type);
@@ -30,8 +31,8 @@ public:
     std::string get_original_title() const;
     void set_original_title(const std::string &original_title);
 
-    std::string get_genres() const;
-    void set_genres(const std::string &genres);
+    const std::vector<std::string>& get_genres() const;
+    void set_genres(const std::string &raw_genres);
 
     bool get_is_adult() const;
     void set_is_adult(bool is_adult);

@@ -7,22 +7,22 @@ using namespace std;
 FilmesCrop::FilmesCrop() {}
 
 
-FilmesCrop::FilmesCrop(const string &tconst, const string &title_type, const string &primary_title,
-                       const string &original_title, const string &genres, bool is_adult, int start_year, int runtime_minutes) {
+FilmesCrop::FilmesCrop(const int tconst, const string &title_type, const string &primary_title,
+                       const string &original_title, const string &raw_genres, bool is_adult, int start_year, int runtime_minutes) {
     this->tconst = tconst;
     this->titleType = title_type;
     this->primaryTitle = primary_title;
     this->originalTitle = original_title;
-    this->genres = genres;
+    set_genres(raw_genres)
     this->isAdult = is_adult;
     this->startYear = start_year;
     this->runtimeMinutes = runtime_minutes;
 }
 
-std::string FilmesCrop::get_tconst() const {
+int FilmesCrop::get_tconst() const {
     return tconst;
 }
-void FilmesCrop::set_tconst(const std::string &tconst) {
+void FilmesCrop::set_tconst(const int tconst) {
     this->tconst = tconst;
 }
 
@@ -47,11 +47,23 @@ void FilmesCrop::set_original_title(const std::string &original_title) {
     this->originalTitle = original_title;
 }
 
-std::string FilmesCrop::get_genres() const {
+const std::vector<std::string>& FilmesCrop::get_genres() const {
     return genres;
 }
-void FilmesCrop::set_genres(const std::string &genres) {
-    this->genres = genres;
+
+void FilmesCrop::set_genres(const std::string &raw_genres) {
+    genres.clear();
+
+    if (raw_genres == "\\N" || raw_genres.empty()) {
+        return;
+    }
+
+    std::stringstream ss(raw_genres);
+    std::string segment;
+
+    while (std::getline(ss, segment, ',')) {
+        genres.push_back(segment);
+    }
 }
 
 bool FilmesCrop::get_is_adult() const {
