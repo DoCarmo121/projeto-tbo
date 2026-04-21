@@ -5,18 +5,14 @@
 #include <string>
 #include <vector>
 #include <iostream>
-using namespace std;
 #include <fstream>
 #include <sstream>
+#include<limits>
+
+using namespace std;
 
 #include "Cinemas.h"
 #include "FilmesCrop.h"
-
-
-int main() {
-
-
-}
 
 int parseTconst(const string& str) {
     try {
@@ -30,7 +26,7 @@ int parseInteger(const string& str) {
     if (str == "\\N" || str.empty()) return -1;
     try {
         return stoi(str);
-    }catch (exception e) {
+    }catch (exception& e) {
         return -1;
     }
 }
@@ -157,4 +153,16 @@ vector<Cinemas> lerArquivoCinemas() {
     file.close();
 
     return vetorCinemas;
+}
+
+int main() {
+    cout << "Iniciando leitura dos arquivos..." << endl;
+
+    vector<FilmesCrop> filmes = lerArquivoFilmes();
+    cout << "Total de filmes carregados: " << filmes.size() << endl;
+
+    vector<Cinemas> cinemas = lerArquivoCinemas();
+    cout << "Total de cinemas carregados: " << cinemas.size() << endl;
+
+    return 0;
 }

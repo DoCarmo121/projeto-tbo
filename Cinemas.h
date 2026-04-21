@@ -15,13 +15,13 @@ private:
     int coordenadaX;
     int coordenadaY;
     float precoIngresso;
-    std::vector<std::string> filmesExibicao;
+    std::vector<int> filmesExibicao;
 
 public:
     Cinemas();
 
     Cinemas(const int cinemas_id, const std::string &nome_cinema, int coordenada_x, int coordenada_y,
-            float preco_ingresso, const std::vector<std::string> &filmes_exibicao);
+            float preco_ingresso, const std::vector<int> &filmes_exibicao);
 
     int cinemas_id() const;
     void set_cinemas_id(const int &cinemas_id);
@@ -38,8 +38,8 @@ public:
     float preco_ingresso() const;
     void set_preco_ingresso(float preco_ingresso);
 
-    std::vector<std::string> filmes_exibicao() const;
-    void set_filmes_exibicao(const std::vector<std::string> &filmes_exibicao);
+    std::vector<int> filmes_exibicao() const;
+    void set_filmes_exibicao(const std::vector<int> &filmes_exibicao);
 };
 
 #endif //PROJETO_TBO_CINEMAS_H

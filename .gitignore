@@ -1,0 +1,7 @@
+# Executáveis
+main
+*.exe
+*.out
+
+# Arquivos compilados temporários
+*.o
