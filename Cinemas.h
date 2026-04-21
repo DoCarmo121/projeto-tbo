@@ -38,7 +38,7 @@ public:
     float preco_ingresso() const;
     void set_preco_ingresso(float preco_ingresso);
 
-    std::vector<int> filmes_exibicao() const;
+    const std::vector<int>& Cinemas::filmes_exibicao() const;
     void set_filmes_exibicao(const std::vector<int> &filmes_exibicao);
 };
 

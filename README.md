@@ -38,3 +38,23 @@ Consultar filmes do tipo "tvEpisode" feitos no ano 2004, do gênero Comedy ou Ta
 Caso o cinema referencie um código de filme que não existe, pegue o filme com o código maior mais próximo do código do filme
 
 O trabalho deve mostrar o tempo utilizado, tanto ao carregar a base de filmes, quanto ao mostrar as buscas. É preferível um tempo considerável ao carregar, que ao consultar
+
+## Índice Espacial Secundário (Grid / Spatial Hashing)
+
+Esta tabela hash agrupa cinemas geograficamente próximos no mesmo "balde" (*bucket*), permitindo buscas de "cinemas ao redor" em tempo `O(1)`. Isso elimina a necessidade de varrer arrays inteiros e calcular distâncias euclidianas para todo o dataset.
+
+### Mecanismo de Funcionamento
+
+1. **Discretização (Grid):** As coordenadas brutas (`X`, `Y`) são divididas por uma constante (ex: `1000`). A divisão inteira nativa do C++ trunca as casas decimais, forçando coordenadas próximas a resultarem no mesmo valor de quadrante (`X_Bucket` e `Y_Bucket`).
+
+2. **Chave Única (Multiplicativa):** Para utilizar um único mapa e evitar instâncias pesadas de strings, os dois eixos são fundidos em um número inteiro através da fórmula:
+   `Chave = (X_Bucket * FATOR) + Y_Bucket`
+
+   > **Aviso de Implementação:** O `FATOR` (ex: `100000`) deve ser estritamente maior que o valor máximo possível de `Y_Bucket` para evitar colisões cruzadas entre quadrantes diferentes. A chave resultante utiliza o tipo `long long` para prevenir estouro de limite numérico (*overflow*).
+
+### Estrutura de Dados
+
+* **Tipo:** `std::unordered_map`
+* **Chave (`long long`):** ID único do quadrante gerado pela matemática de discretização.
+  *(Ex: `(X_Bucket * 100000LL) + Y_Bucket`)*
+* **Valor (`std::vector<int>`):** Lista contendo os índices normalizados do array principal onde os objetos dos cinemas estão armazenados na memória.

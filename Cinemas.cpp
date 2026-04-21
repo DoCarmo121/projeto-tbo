@@ -53,7 +53,7 @@ void Cinemas::set_preco_ingresso(float preco_ingresso) {
     precoIngresso = preco_ingresso;
 }
 
-std::vector<int> Cinemas::filmes_exibicao() const {
+const std::vector<int> &Cinemas::filmes_exibicao() const {
     return filmesExibicao;
 }
 
