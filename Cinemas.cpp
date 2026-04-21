@@ -7,17 +7,17 @@
 Cinemas::Cinemas() : coordenadaX(0), coordenadaY(0), precoIngresso(0.0f) {
 }
 
-Cinemas::Cinemas(const std::string &cinemas_id, const std::string &nome_cinema, int coordenada_x, int coordenada_y,
+Cinemas::Cinemas(const int cinemas_id, const std::string &nome_cinema, int coordenada_x, int coordenada_y,
                  float preco_ingresso, const std::vector<std::string> &filmes_exibicao)
         : cinemasId(cinemas_id), nomeCinema(nome_cinema), coordenadaX(coordenada_x),
           coordenadaY(coordenada_y), precoIngresso(preco_ingresso), filmesExibicao(filmes_exibicao) {
 }
 
-std::string Cinemas::cinemas_id() const {
+int  Cinemas::cinemas_id() const {
     return cinemasId;
 }
 
-void Cinemas::set_cinemas_id(const std::string &cinemas_id) {
+void Cinemas::set_cinemas_id(const int &cinemas_id) {
     cinemasId = cinemas_id;
 }
 

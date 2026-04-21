@@ -1,5 +1,6 @@
 #include "FilmesCrop.h"
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -13,7 +14,7 @@ FilmesCrop::FilmesCrop(const int tconst, const string &title_type, const string 
     this->titleType = title_type;
     this->primaryTitle = primary_title;
     this->originalTitle = original_title;
-    set_genres(raw_genres)
+    set_genres(raw_genres);
     this->isAdult = is_adult;
     this->startYear = start_year;
     this->runtimeMinutes = runtime_minutes;

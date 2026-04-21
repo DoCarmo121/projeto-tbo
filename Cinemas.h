@@ -10,7 +10,7 @@
 
 class Cinemas {
 private:
-    std::string cinemasId;
+    int cinemasId;
     std::string nomeCinema;
     int coordenadaX;
     int coordenadaY;
@@ -20,11 +20,11 @@ private:
 public:
     Cinemas();
 
-    Cinemas(const std::string &cinemas_id, const std::string &nome_cinema, int coordenada_x, int coordenada_y,
+    Cinemas(const int cinemas_id, const std::string &nome_cinema, int coordenada_x, int coordenada_y,
             float preco_ingresso, const std::vector<std::string> &filmes_exibicao);
 
-    std::string cinemas_id() const;
-    void set_cinemas_id(const std::string &cinemas_id);
+    int cinemas_id() const;
+    void set_cinemas_id(const int &cinemas_id);
 
     std::string nome_cinema() const;
     void set_nome_cinema(const std::string &nome_cinema);

@@ -35,6 +35,15 @@ int parseInteger(const string& str) {
     }
 }
 
+float parseFloat(const string& str) {
+    if (str == "\\N" || str.empty()) return -1.0f;
+    try {
+        return stof(str);
+    } catch (exception& e) {
+        return -1.0f;
+    }
+}
+
 vector<FilmesCrop> lerArquivoFilmes() {
     ifstream file ("dados/filmesCrop.txt");
     vector<FilmesCrop> vetorFilmes;
@@ -87,4 +96,65 @@ vector<FilmesCrop> lerArquivoFilmes() {
     file.close();
 
     return vetorFilmes;
+}
+
+vector<Cinemas> lerArquivoCinemas() {
+    ifstream file ("dados/cinemas(1).txt");
+    vector<Cinemas> vetorCinemas;
+    string linha;
+
+    if (!file.is_open()) {
+        cout << "Erro ao abrir o arquivo" << endl;
+        return vetorCinemas;
+    }
+
+    getline(file, linha);
+
+    vetorCinemas.reserve(1000000);
+
+    while (getline(file, linha)) {
+        stringstream ss(linha);
+        string token;
+        Cinemas cinema;
+
+        getline(ss, token, ',');
+        cinema.set_cinemas_id(parseTconst(token));
+
+        getline(ss, token, ',');
+        cinema.set_nome_cinema(token);
+
+        getline(ss, token, ',');
+        cinema.set_coordenada_x(parseInteger(token));
+
+        getline(ss, token, ',');
+        cinema.set_coordenada_y(parseInteger(token));
+
+        getline(ss, token, ',');
+        cinema.set_preco_ingresso(parseFloat(token));
+
+        getline(ss, token);
+        vector<int> listaFilmesId;
+        if (token != "\\N" && !token.empty()) {
+            stringstream ssFilmes(token);
+            string idFilmeStr;
+
+            while (getline(ssFilmes, idFilmeStr, ',')) {
+
+                size_t start = idFilmeStr.find_first_not_of(" ");
+                if (start != string::npos) {
+                    idFilmeStr = idFilmeStr.substr(start);
+                }
+                listaFilmesId.push_back(parseTconst(idFilmeStr));
+            }
+        }
+
+        cinema.set_filmes_exibicao(listaFilmesId);
+
+        vetorCinemas.push_back(cinema);
+
+    }
+
+    file.close();
+
+    return vetorCinemas;
 }

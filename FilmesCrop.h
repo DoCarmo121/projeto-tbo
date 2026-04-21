@@ -2,6 +2,7 @@
 #define PROJETO_TBO_FILMESCROP_H
 
 #include <string>
+#include <vector>
 
 class FilmesCrop {
 
