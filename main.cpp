@@ -60,7 +60,7 @@ vector<FilmesCrop> lerArquivoFilmes() {
         FilmesCrop filme;
 
         getline(ss, token, '\t');
-        filme.set_tconst(parseTconst(token));
+        filme.set_tconst((parseTconst(token)-7917518)/2);
 
         getline(ss, token, '\t');
         filme.set_title_type(token);
@@ -114,7 +114,7 @@ vector<Cinemas> lerArquivoCinemas() {
         Cinemas cinema;
 
         getline(ss, token, ',');
-        cinema.set_cinemas_id(parseTconst(token));
+        cinema.set_cinemas_id(parseTconst(token)-1);
 
         getline(ss, token, ',');
         cinema.set_nome_cinema(token);
