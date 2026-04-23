@@ -10,6 +10,7 @@
 #include<limits>
 #include<unordered_map>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 
@@ -210,6 +211,21 @@ vector<int> buscarPorAno(int ano) {
     return{};
 }
 
+vector<int> buscarPorIntervaloDeAnos(int min, int max) {
+    vector<int> filmesEntreAnos;
+    for (int t = min; t <= max; ++t) {
+        if (hash_year.count(t)) {
+            vector<int> resultadoLocal = hash_year[t];
+            vector<int> temp;
+            set_union(filmesEntreAnos.begin(), filmesEntreAnos.end(),
+                            resultadoLocal.begin(), resultadoLocal.end(),
+                            back_inserter(temp));
+            filmesEntreAnos = temp;
+        }
+    }
+    return filmesEntreAnos;
+}
+
 vector<int> buscarPorGenero(string genre) {
     if (hash_Genres.count(genre)) return hash_Genres[genre];
     return{};
@@ -220,9 +236,19 @@ vector<int> buscarPorDuracao(int duracao) {
     return {};
 }
 
-vector<int> buscarPorClassificacao(bool isAdult) {
-    if (hash_IsAdult.count(isAdult)) return hash_IsAdult[isAdult];
-    return {};
+vector<int> buscarPorIntervaloDuracao(int min, int max) {
+    vector<int> filmesNoTempo;
+    for (int t = min; t <= max; ++t) {
+        if (hash_RuntimeMinutes.count(t)) {
+            vector<int> resultadoLocal = hash_RuntimeMinutes[t];
+            vector<int> temp;
+            set_union(filmesNoTempo.begin(), filmesNoTempo.end(),
+                           resultadoLocal.begin(), resultadoLocal.end(),
+                           back_inserter(temp));
+            filmesNoTempo = temp;
+        }
+    }
+    return filmesNoTempo;
 }
 
 vector<int> buscarPorTipo(string tipo) {
@@ -230,14 +256,109 @@ vector<int> buscarPorTipo(string tipo) {
     return {};
 }
 
-vector<int> buscarPorTituloOriginal(string tituloOriginal) {
-    if (hash_OriginalTitle.count(tituloOriginal)) return hash_OriginalTitle[tituloOriginal];
-    return {};
+vector<int> buscarCinemasPorListaFilmes(const vector<int>& filmesIds) {
+    vector<int> cinemasEncontrados;
+    for (int idFilme : filmesIds) {
+        if (hash_FilmesExibicao.count(idFilme)) {
+            vector<int> cinesDoFilme = hash_FilmesExibicao[idFilme];
+            vector<int> temp;
+            set_union(cinemasEncontrados.begin(), cinemasEncontrados.end(),
+                           cinesDoFilme.begin(), cinesDoFilme.end(),
+                           back_inserter(temp));
+            cinemasEncontrados = temp;
+        }
+    }
+    return cinemasEncontrados;
 }
 
-vector<int> buscarPorTituloPrimario(string tituloPrimario) {
-    if (hash_PrimaryTitle.count(tituloPrimario)) return hash_PrimaryTitle[tituloPrimario];
-    return {};
+vector<int> buscarAtePreco(int preco) {
+    vector<int> cinemasEncontrados;
+    for (int i = 0; i <= preco; ++i) {
+        if (hash_TicketPrice.count(i)) {
+            vector<int> resultadoLocal = hash_TicketPrice[i];
+            vector<int> temp;
+            set_union(cinemasEncontrados.begin(), cinemasEncontrados.end(),
+                                resultadoLocal.begin(), resultadoLocal.end(),
+                                back_inserter(temp));
+            cinemasEncontrados = temp;
+        }
+    }
+    return cinemasEncontrados;
+}
+
+vector<int> buscarCinemasPorDistancia(int userX, int userY, int maxDistancia, const vector<Cinemas>& vetorCinemas) {
+    vector<int> cinemasEncontrados;
+
+    const int TAMANHO_BLOCO = 1000; // Deve ser EXATAMENTE o mesmo divisor usado na leitura do arquivo
+
+    // Calcula quantos quadrantes precisamos "andar" para cobrir a distância
+    int raioBlocos = (maxDistancia / TAMANHO_BLOCO) + 1;
+
+    // Descobre o quadrante onde o usuário está pisando
+    int centroXB = userX / TAMANHO_BLOCO;
+    int centroYB = userY / TAMANHO_BLOCO;
+
+    // Eleva o limite de distância ao quadrado uma única vez (usando cast para evitar overflow)
+    long long maxDistQuad = static_cast<long long>(maxDistancia) * maxDistancia;
+
+    // ====================================================================
+    // FASE 1: BROAD PHASE (Filtro Grosso via Grid Hashing)
+    // ====================================================================
+    for (int dx = -raioBlocos; dx <= raioBlocos; ++dx) {
+        for (int dy = -raioBlocos; dy <= raioBlocos; ++dy) {
+
+            int lookXB = centroXB + dx;
+            int lookYB = centroYB + dy;
+
+            // Recria a chave única exatamente como no momento da indexação
+            long long lookChave = (lookXB * 10000LL) + lookYB;
+
+            // Se esse quadrante existir na nossa Tabela Hash, vamos bisbilhotar os cinemas dele
+            if (hash_Coordenadas.count(lookChave)) {
+
+                // ====================================================================
+                // FASE 2: NARROW PHASE (Filtro Fino via Pitágoras)
+                // ====================================================================
+                for (int idxCinema : hash_Coordenadas[lookChave]) {
+                    const Cinemas& c = vetorCinemas[idxCinema]; // Acesso O(1) ao objeto real
+
+                    // Diferença matemática exata entre os pontos (usando long long para segurança)
+                    long long diffX = static_cast<long long>(c.coordenada_x()) - userX;
+                    long long diffY = static_cast<long long>(c.coordenada_y()) - userY;
+
+                    // Pitágoras (a^2 + b^2 = c^2) - Ignoramos a raiz quadrada!
+                    long long distQuad = (diffX * diffX) + (diffY * diffY);
+
+                    // Se a distância ao quadrado for menor ou igual ao limite ao quadrado, está dentro do raio!
+                    if (distQuad <= maxDistQuad) {
+                        cinemasEncontrados.push_back(idxCinema);
+                    }
+                }
+            }
+        }
+    }
+
+    return cinemasEncontrados;
+}
+
+vector<int> buscarCinemasPorTituloFilme(string titulo) {
+    vector<int> filmesComTitulo;
+    if (hash_PrimaryTitle.count(titulo)) {
+        filmesComTitulo = hash_PrimaryTitle[titulo];
+    }
+
+    // Pega os IDs pelo título original e faz a União (caso existam filmes diferentes com o mesmo título em colunas diferentes)
+    if (hash_OriginalTitle.count(titulo)) {
+        vector<int> tituloOriginal = hash_OriginalTitle[titulo];
+        vector<int> temp;
+        set_union(filmesComTitulo.begin(), filmesComTitulo.end(),
+                  tituloOriginal.begin(), tituloOriginal.end(),
+                  back_inserter(temp));
+        filmesComTitulo = temp;
+    }
+
+    // Passa a lista de filmes encontrada para o buscador de cinemas
+    return buscarCinemasPorListaFilmes(filmesComTitulo);
 }
 
 int main() {
