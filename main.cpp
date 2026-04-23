@@ -205,6 +205,41 @@ vector<Cinemas> lerArquivoCinemas() {
     return vetorCinemas;
 }
 
+vector<int> buscarPorAno(int ano) {
+    if (hash_year.count(ano)) return hash_year[ano];
+    return{};
+}
+
+vector<int> buscarPorGenero(string genre) {
+    if (hash_Genres.count(genre)) return hash_Genres[genre];
+    return{};
+}
+
+vector<int> buscarPorDuracao(int duracao) {
+    if (hash_RuntimeMinutes.count(duracao)) return hash_RuntimeMinutes[duracao];
+    return {};
+}
+
+vector<int> buscarPorClassificacao(bool isAdult) {
+    if (hash_IsAdult.count(isAdult)) return hash_IsAdult[isAdult];
+    return {};
+}
+
+vector<int> buscarPorTipo(string tipo) {
+    if (hash_type.count(tipo)) return hash_type[tipo];
+    return {};
+}
+
+vector<int> buscarPorTituloOriginal(string tituloOriginal) {
+    if (hash_OriginalTitle.count(tituloOriginal)) return hash_OriginalTitle[tituloOriginal];
+    return {};
+}
+
+vector<int> buscarPorTituloPrimario(string tituloPrimario) {
+    if (hash_PrimaryTitle.count(tituloPrimario)) return hash_PrimaryTitle[tituloPrimario];
+    return {};
+}
+
 int main() {
     cout << "Iniciando leitura dos arquivos..." << endl;
 
