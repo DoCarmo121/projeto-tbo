@@ -30,6 +30,44 @@ unordered_map<int, vector<int>> hash_TicketPrice;
 unordered_map<int, vector<int>> hash_FilmesExibicao;
 unordered_map<long long, vector<int>> hash_Coordenadas;
 
+void merge(vector<int>& indices, const vector<long long>& distancias, int e, int m, int d) {
+    int n1 = m - e + 1;
+    int n2 = d - m;
+
+    vector<int> esq(n1), dir(n2);
+
+    for (int i = 0; i < n1; i++) esq[i] = indices[e + i];
+    for (int j = 0; j < n2; j++) dir[j] = indices[m + 1 + j];
+
+    int i = 0, j = 0, k = e;
+
+    while (i < n1 && j < n2) {
+        // A lógica de ordenação baseada nos valores do vetor 'distancias'
+        if (distancias[esq[i]] <= distancias[dir[j]]) {
+            indices[k] = esq[i];
+            i++;
+        } else {
+            indices[k] = dir[j];
+            j++;
+        }
+        k++;
+    }
+
+    while (i < n1) indices[k++] = esq[i++];
+    while (j < n2) indices[k++] = dir[j++];
+}
+
+void mergeSortIndices(vector<int>& indices, const vector<long long>& distancias, int e, int d) {
+    if (e < d) {
+        int m = e + (d - e) / 2;
+
+        mergeSortIndices(indices, distancias, e, m);
+        mergeSortIndices(indices, distancias, m + 1, d);
+
+        merge(indices, distancias, e, m, d);
+    }
+}
+
 int parseTconst(const string& str) {
     try {
         return stoi(str.substr(2));
@@ -289,6 +327,10 @@ vector<int> buscarAtePreco(int preco) {
 vector<int> buscarCinemasPorDistancia(int userX, int userY, int maxDistancia, const vector<Cinemas>& vetorCinemas) {
     vector<int> cinemasEncontrados;
 
+    // Criamos um vetor paralelo para armazenar a distância de cada cinema encontrado.
+    // Ele tem o tamanho total do vetorCinemas para que possamos usar o idxCinema direto como chave.
+    vector<long long> distanciasCinemas(vetorCinemas.size(), 0);
+
     const int TAMANHO_BLOCO = 1000; // Deve ser EXATAMENTE o mesmo divisor usado na leitura do arquivo
 
     // Calcula quantos quadrantes precisamos "andar" para cobrir a distância
@@ -332,10 +374,15 @@ vector<int> buscarCinemasPorDistancia(int userX, int userY, int maxDistancia, co
                     // Se a distância ao quadrado for menor ou igual ao limite ao quadrado, está dentro do raio!
                     if (distQuad <= maxDistQuad) {
                         cinemasEncontrados.push_back(idxCinema);
+                        distanciasCinemas[idxCinema] = distQuad;
                     }
                 }
             }
         }
+    }
+    // Após encontrar todos os cinemas, usamos o seu Merge Sort para ordená-los!
+    if (!cinemasEncontrados.empty()) {
+        mergeSortIndices(cinemasEncontrados, distanciasCinemas, 0, cinemasEncontrados.size() - 1);
     }
 
     return cinemasEncontrados;
