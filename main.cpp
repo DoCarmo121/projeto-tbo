@@ -15,6 +15,7 @@
 #include <unordered_set>
 #include <iomanip>
 #include <iterator>
+#include<map>
 
 using namespace std;
 
@@ -37,6 +38,7 @@ unordered_map<long long, vector<int>> hash_Coordenadas;
 unordered_set<int> filmesCarregados;
 
 unordered_map<string, int> tconstParaIndice;
+map<int,int> tconstNumParaIndice;
 
 void merge(vector<int>& arr, int e, int m, int d) {
     int n1 = m - e + 1;
@@ -122,6 +124,9 @@ vector<FilmesCrop> lerArquivoFilmes(int& totalValidos) {
         if (indice < 0) continue;
 
         tconstParaIndice[token] = indice;
+
+        int tconstNum = parseTconst(token);
+        tconstNumParaIndice[tconstNum] = indice;
 
         totalValidos++;
         filme.set_tconst(indice);
@@ -244,10 +249,16 @@ vector<Cinemas> lerArquivoCinemas(int& totalCinemas, const vector<FilmesCrop>& v
                 if (start == string::npos) continue;
                 idFilmeStr = idFilmeStr.substr(start, end - start + 1);
 
-                if (tconstParaIndice.count(idFilmeStr)) {
-                    int idFilme = tconstParaIndice[idFilmeStr];
-                    listaFilmesId.push_back(idFilme);
-                    hash_FilmesExibicao[idFilme].push_back(indice);
+                int idFilmeNum = parseTconst(idFilmeStr); // Transforma a string "tt000123" em int
+                if (idFilmeNum != -1) {
+                    // lower_bound acha o exato, ou o próximo maior
+                    auto it = tconstNumParaIndice.lower_bound(idFilmeNum);
+
+                    if (it != tconstNumParaIndice.end()) {
+                        int idFilme = it->second; // Esse é o seu índice interno
+                        listaFilmesId.push_back(idFilme);
+                        hash_FilmesExibicao[idFilme].push_back(indice);
+                    }
                 }
             }
         }
@@ -474,6 +485,8 @@ int main() {
                 vector<int> resTemp;
                 string nomeTemp;
 
+                auto startFiltro = chrono::high_resolution_clock::now();
+
                 if (opcaoEntidade == 1) {
                     cout << "\n1. Tipo | 2. Genero | 3. Duracao | 4. Ano" << endl;
                     cout << "Filtro: "; cin >> opcaoFiltro;
@@ -519,9 +532,16 @@ int main() {
                     }
                 }
 
+                auto endFiltro = chrono::high_resolution_clock::now();
+
                 if (!nomeTemp.empty()) {
                     historicoIds.push_back(resTemp);
                     historicoNomes.push_back(nomeTemp);
+
+                    cout << "-> Busca executada em: "
+                         << chrono::duration_cast<chrono::microseconds>(endFiltro - startFiltro).count()
+                         << " microsegundos.\n";
+
                 }
 
             } else if ((acao == 2 || acao == 3) && historicoIds.size() >= 2) {
