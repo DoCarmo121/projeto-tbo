@@ -45,4 +45,4 @@ public:
     void set_runtime_minutes(int runtime_minutes);
 };
 
-#endif //PROJETO_TBO_FILMESCROP_H
+#endif

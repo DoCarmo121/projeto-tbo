@@ -12,10 +12,8 @@
 #include <cmath>
 #include <algorithm>
 #include <chrono>
-#include <unordered_set>
 #include <iomanip>
 #include <iterator>
-#include<map>
 
 using namespace std;
 
@@ -35,10 +33,7 @@ unordered_map<int, vector<int>> hash_TicketPrice;
 unordered_map<int, vector<int>> hash_FilmesExibicao;
 unordered_map<long long, vector<int>> hash_Coordenadas;
 
-unordered_set<int> filmesCarregados;
-
-unordered_map<string, int> tconstParaIndice;
-map<int,int> tconstNumParaIndice;
+vector<pair<int, int>> tconstNumParaIndice;
 
 void merge(vector<int>& arr, int e, int m, int d) {
     int n1 = m - e + 1;
@@ -123,10 +118,8 @@ vector<FilmesCrop> lerArquivoFilmes(int& totalValidos) {
         int indice = (parseTconst(token) - 7917518) / 2;
         if (indice < 0) continue;
 
-        tconstParaIndice[token] = indice;
-
         int tconstNum = parseTconst(token);
-        tconstNumParaIndice[tconstNum] = indice;
+        tconstNumParaIndice.push_back({tconstNum, indice});
 
         totalValidos++;
         filme.set_tconst(indice);
@@ -174,22 +167,24 @@ vector<FilmesCrop> lerArquivoFilmes(int& totalValidos) {
             vetorFilmes.resize(indice + 1);
         }
         vetorFilmes[indice] = filme;
-        filmesCarregados.insert(indice);
     }
 
-    for (auto& par : hash_Genres)         { sort(par.second.begin(), par.second.end()); par.second.erase(unique(par.second.begin(), par.second.end()), par.second.end()); }
-    for (auto& par : hash_type)           { sort(par.second.begin(), par.second.end()); par.second.erase(unique(par.second.begin(), par.second.end()), par.second.end()); }
-    for (auto& par : hash_year)           { sort(par.second.begin(), par.second.end()); par.second.erase(unique(par.second.begin(), par.second.end()), par.second.end()); }
-    for (auto& par : hash_RuntimeMinutes) { sort(par.second.begin(), par.second.end()); par.second.erase(unique(par.second.begin(), par.second.end()), par.second.end()); }
-    for (auto& par : hash_PrimaryTitle)   { sort(par.second.begin(), par.second.end()); par.second.erase(unique(par.second.begin(), par.second.end()), par.second.end()); }
-    for (auto& par : hash_OriginalTitle)  { sort(par.second.begin(), par.second.end()); par.second.erase(unique(par.second.begin(), par.second.end()), par.second.end()); }
-    for (auto& par : hash_IsAdult)        { sort(par.second.begin(), par.second.end()); par.second.erase(unique(par.second.begin(), par.second.end()), par.second.end()); }
+    for (auto& par : hash_Genres)         { if (!par.second.empty()) mergeSort(par.second, 0, par.second.size() - 1); }
+    for (auto& par : hash_type)           { if (!par.second.empty()) mergeSort(par.second, 0, par.second.size() - 1); }
+    for (auto& par : hash_year)           { if (!par.second.empty()) mergeSort(par.second, 0, par.second.size() - 1); }
+    for (auto& par : hash_RuntimeMinutes) { if (!par.second.empty()) mergeSort(par.second, 0, par.second.size() - 1); }
+    for (auto& par : hash_PrimaryTitle)   { if (!par.second.empty()) mergeSort(par.second, 0, par.second.size() - 1); }
+    for (auto& par : hash_OriginalTitle)  { if (!par.second.empty()) mergeSort(par.second, 0, par.second.size() - 1); }
+    for (auto& par : hash_IsAdult)        { if (!par.second.empty()) mergeSort(par.second, 0, par.second.size() - 1); }
 
     file.close();
+
+    sort(tconstNumParaIndice.begin(), tconstNumParaIndice.end());
+
     return vetorFilmes;
 }
 
-vector<Cinemas> lerArquivoCinemas(int& totalCinemas, const vector<FilmesCrop>& vetorFilmes) {
+vector<Cinemas> lerArquivoCinemas(int& totalCinemas) {
     ifstream file("dados/cinemas(1).txt");
     vector<Cinemas> vetorCinemas;
     string linha;
@@ -249,13 +244,16 @@ vector<Cinemas> lerArquivoCinemas(int& totalCinemas, const vector<FilmesCrop>& v
                 if (start == string::npos) continue;
                 idFilmeStr = idFilmeStr.substr(start, end - start + 1);
 
-                int idFilmeNum = parseTconst(idFilmeStr); // Transforma a string "tt000123" em int
+                int idFilmeNum = parseTconst(idFilmeStr);
                 if (idFilmeNum != -1) {
-                    // lower_bound acha o exato, ou o próximo maior
-                    auto it = tconstNumParaIndice.lower_bound(idFilmeNum);
+                    auto it = lower_bound(tconstNumParaIndice.begin(), tconstNumParaIndice.end(),
+                                          make_pair(idFilmeNum, 0),
+                                          [](const pair<int, int>& a, const pair<int, int>& b) {
+                                              return a.first < b.first;
+                                          });
 
                     if (it != tconstNumParaIndice.end()) {
-                        int idFilme = it->second; // Esse é o seu índice interno
+                        int idFilme = it->second;
                         listaFilmesId.push_back(idFilme);
                         hash_FilmesExibicao[idFilme].push_back(indice);
                     }
@@ -270,30 +268,23 @@ vector<Cinemas> lerArquivoCinemas(int& totalCinemas, const vector<FilmesCrop>& v
         vetorCinemas[indice] = cinema;
     }
 
-    for (auto& par : hash_FilmesExibicao) { sort(par.second.begin(), par.second.end()); par.second.erase(unique(par.second.begin(), par.second.end()), par.second.end()); }
-    for (auto& par : hash_TicketPrice)    { sort(par.second.begin(), par.second.end()); par.second.erase(unique(par.second.begin(), par.second.end()), par.second.end()); }
-    for (auto& par : hash_CineName)       { sort(par.second.begin(), par.second.end()); par.second.erase(unique(par.second.begin(), par.second.end()), par.second.end()); }
+    for (auto& par : hash_FilmesExibicao) { if (!par.second.empty()) mergeSort(par.second, 0, par.second.size() - 1); }
+    for (auto& par : hash_TicketPrice)    { if (!par.second.empty()) mergeSort(par.second, 0, par.second.size() - 1); }
+    for (auto& par : hash_CineName)       { if (!par.second.empty()) mergeSort(par.second, 0, par.second.size() - 1); }
 
     file.close();
     return vetorCinemas;
-}
-
-vector<int> buscarPorAno(int ano) {
-    if (hash_year.count(ano)) return hash_year[ano];
-    return {};
 }
 
 vector<int> buscarPorIntervaloDeAnos(int min, int max) {
     vector<int> filmesEntreAnos;
     for (int t = min; t <= max; ++t) {
         if (hash_year.count(t)) {
-            vector<int> resultadoLocal = hash_year[t];
-            vector<int> temp;
-            set_union(filmesEntreAnos.begin(), filmesEntreAnos.end(),
-                      resultadoLocal.begin(), resultadoLocal.end(),
-                      back_inserter(temp));
-            filmesEntreAnos = temp;
+            filmesEntreAnos.insert(filmesEntreAnos.end(), hash_year[t].begin(), hash_year[t].end());
         }
+    }
+    if (!filmesEntreAnos.empty()) {
+        mergeSort(filmesEntreAnos, 0, filmesEntreAnos.size() - 1);
     }
     return filmesEntreAnos;
 }
@@ -346,12 +337,10 @@ vector<int> buscarCinemasPorListaFilmes(const vector<int>& filmesIds) {
 vector<int> buscarAtePreco(float precoMaximo, const vector<Cinemas>& vetorCinemas) {
     vector<int> cinemasEncontrados;
     for (const auto& cinema : vetorCinemas) {
-        if (cinema.preco_ingresso() >= 0 && cinema.preco_ingresso() <= precoMaximo) {
+        if (!cinema.nome_cinema().empty() && cinema.preco_ingresso() >= 0 && cinema.preco_ingresso() <= precoMaximo) {
             cinemasEncontrados.push_back(cinema.cinemas_id());
         }
     }
-    // Como você iterou ordenadamente pela ID, o vetor resultante já sairá ordenado,
-    // pronto para as suas funções de interseção (AND/OR).
     return cinemasEncontrados;
 }
 
@@ -424,6 +413,19 @@ vector<int> OR_Vectors(const vector<int>& v1, const vector<int>& v2) {
     return result;
 }
 
+int lerInteiro(const string& prompt) {
+    int valor;
+    while (true) {
+        cout << prompt;
+        if (cin >> valor) {
+            return valor;
+        }
+        cout << "[!] Entrada invalida. Por favor, digite um numero valido.\n";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+}
+
 int main() {
     cout << "Iniciando leitura dos arquivos..." << endl;
     auto start = chrono::high_resolution_clock::now();
@@ -433,7 +435,7 @@ int main() {
     cout << "Total de filmes carregados: " << totalFilmes << endl;
 
     int totalCinemas;
-    vector<Cinemas> cinemas = lerArquivoCinemas(totalCinemas, filmes);
+    vector<Cinemas> cinemas = lerArquivoCinemas(totalCinemas);
     cout << "Total de cinemas carregados: " << totalCinemas << endl;
 
     auto end = chrono::high_resolution_clock::now();
@@ -447,14 +449,17 @@ int main() {
         cout << "1. Filmes" << endl;
         cout << "2. Cinemas" << endl;
         cout << "0. Sair" << endl;
-        cout << "Escolha: ";
-        if (!(cin >> opcaoEntidade)) break;
+        opcaoEntidade = lerInteiro("Escolha: ");
 
         if (opcaoEntidade == 0) break;
+        if (opcaoEntidade != 1 && opcaoEntidade != 2) {
+            cout << "[!] Opcao invalida.\n";
+            continue;
+        }
 
-        // Nossa "Area de Trabalho" onde os blocos de consulta vao ficar salvos
         vector<vector<int>> historicoIds;
         vector<string> historicoNomes;
+        vector<long long> historicoTempos;
         int acao = -1;
 
         while (acao != 0) {
@@ -463,7 +468,7 @@ int main() {
                 cout << "Nenhum filtro criado ainda. Comece adicionando blocos base." << endl;
             } else {
                 for (size_t i = 0; i < historicoIds.size(); ++i) {
-                    cout << "[" << i << "] " << historicoNomes[i] << " -> " << historicoIds[i].size() << " itens encontrados" << endl;
+                    cout << "[" << i << "] " << historicoNomes[i] << " -> " << historicoIds[i].size() << " itens encontrados (" << historicoTempos[i] << " us)" << endl;
                 }
             }
 
@@ -474,11 +479,10 @@ int main() {
                 cout << "3. Combinar dois blocos com OR (Uniao)" << endl;
             }
             if (!historicoIds.empty()) {
-                cout << "4. Ver e Exportar resultados de um bloco" << endl;
+                cout << "4. Ver e Exportar resultados de um bloco (ENCERRA O PROGRAMA)" << endl;
             }
             cout << "0. Voltar ao Menu Principal" << endl;
-            cout << "Escolha: ";
-            cin >> acao;
+            acao = lerInteiro("Escolha: ");
 
             if (acao == 1) {
                 int opcaoFiltro;
@@ -489,7 +493,7 @@ int main() {
 
                 if (opcaoEntidade == 1) {
                     cout << "\n1. Tipo | 2. Genero | 3. Duracao | 4. Ano" << endl;
-                    cout << "Filtro: "; cin >> opcaoFiltro;
+                    opcaoFiltro = lerInteiro("Filtro: ");
 
                     if (opcaoFiltro == 1) {
                         string tipo; cout << "Tipo: "; cin >> tipo;
@@ -498,15 +502,17 @@ int main() {
                         string genero; cout << "Genero: "; cin >> genero;
                         resTemp = buscarPorGenero(genero); nomeTemp = "Gen:" + genero;
                     } else if (opcaoFiltro == 3) {
-                        int min, max; cout << "Min e Max: "; cin >> min >> max;
+                        int min = lerInteiro("Min (minutos): ");
+                        int max = lerInteiro("Max (minutos): ");
                         resTemp = buscarPorIntervaloDuracao(min, max); nomeTemp = "Duracao:" + to_string(min) + "-" + to_string(max);
                     } else if (opcaoFiltro == 4) {
-                        int min, max; cout << "Ano Min e Max: "; cin >> min >> max;
+                        int min = lerInteiro("Ano Min: ");
+                        int max = lerInteiro("Ano Max: ");
                         resTemp = buscarPorIntervaloDeAnos(min, max); nomeTemp = "Ano:" + to_string(min) + "-" + to_string(max);
                     }
                 } else if (opcaoEntidade == 2) {
                     cout << "\n1. Tipo Filme | 2. Genero Filme | 3. Duracao Filme | 4. Distancia | 5. Preco Max | 6. Ano Filme | 7. Titulo Filme" << endl;
-                    cout << "Filtro: "; cin >> opcaoFiltro;
+                    opcaoFiltro = lerInteiro("Filtro: ");
 
                     if (opcaoFiltro == 1) {
                         string tipo; cout << "Tipo do filme: "; cin >> tipo;
@@ -515,16 +521,22 @@ int main() {
                         string genero; cout << "Genero do filme: "; cin >> genero;
                         resTemp = buscarCinemasPorListaFilmes(buscarPorGenero(genero)); nomeTemp = "Filme Gen:" + genero;
                     } else if (opcaoFiltro == 3) {
-                        int min, max; cout << "Min e Max (minutos): "; cin >> min >> max;
+                        int min = lerInteiro("Min (minutos): ");
+                        int max = lerInteiro("Max (minutos): ");
                         resTemp = buscarCinemasPorListaFilmes(buscarPorIntervaloDuracao(min, max)); nomeTemp = "Filme Duracao:" + to_string(min) + "-" + to_string(max);
                     } else if (opcaoFiltro == 4) {
-                        int x, y, dist; cout << "Coordenadas X, Y e Distancia: "; cin >> x >> y >> dist;
+                        int x = lerInteiro("Coordenada X: ");
+                        int y = lerInteiro("Coordenada Y: ");
+                        int dist = lerInteiro("Distancia Max: ");
                         resTemp = buscarCinemasPorDistancia(x, y, dist, cinemas); nomeTemp = "Dist<=" + to_string(dist);
                     } else if (opcaoFiltro == 5) {
-                        float preco; cout << "Preco maximo: "; cin >> preco;
+                        float preco;
+                        cout << "Preco maximo: ";
+                        while (!(cin >> preco)) { cin.clear(); cin.ignore(10000, '\n'); cout << "Invalido. Preco: "; }
                         resTemp = buscarAtePreco(preco, cinemas); nomeTemp = "Preco<=" + to_string(preco).substr(0,4);
                     } else if (opcaoFiltro == 6) {
-                        int min, max; cout << "Ano Min e Max do filme: "; cin >> min >> max;
+                        int min = lerInteiro("Ano Min do filme: ");
+                        int max = lerInteiro("Ano Max do filme: ");
                         resTemp = buscarCinemasPorListaFilmes(buscarPorIntervaloDeAnos(min, max)); nomeTemp = "Filme Ano:" + to_string(min) + "-" + to_string(max);
                     } else if (opcaoFiltro == 7) {
                         string titulo; cout << "Titulo exato: "; cin.ignore(); getline(cin, titulo);
@@ -535,19 +547,17 @@ int main() {
                 auto endFiltro = chrono::high_resolution_clock::now();
 
                 if (!nomeTemp.empty()) {
+                    auto tempoBusca = chrono::duration_cast<chrono::microseconds>(endFiltro - startFiltro).count();
                     historicoIds.push_back(resTemp);
                     historicoNomes.push_back(nomeTemp);
+                    historicoTempos.push_back(tempoBusca);
 
-                    cout << "-> Busca executada em: "
-                         << chrono::duration_cast<chrono::microseconds>(endFiltro - startFiltro).count()
-                         << " microsegundos.\n";
-
+                    cout << "-> Busca executada em: " << tempoBusca << " microsegundos.\n";
                 }
 
             } else if ((acao == 2 || acao == 3) && historicoIds.size() >= 2) {
-                int id1, id2;
-                cout << "ID do primeiro bloco: "; cin >> id1;
-                cout << "ID do segundo bloco: "; cin >> id2;
+                int id1 = lerInteiro("ID do primeiro bloco: ");
+                int id2 = lerInteiro("ID do segundo bloco: ");
 
                 if (id1 >= 0 && id1 < historicoIds.size() && id2 >= 0 && id2 < historicoIds.size()) {
                     auto startLogic = chrono::high_resolution_clock::now();
@@ -561,44 +571,49 @@ int main() {
                     }
 
                     auto endLogic = chrono::high_resolution_clock::now();
-                    cout << "-> Operacao logica executada em: " << chrono::duration_cast<chrono::microseconds>(endLogic - startLogic).count() << " microsegundos.\n";
+                    auto tempoLogica = chrono::duration_cast<chrono::microseconds>(endLogic - startLogic).count();
+                    cout << "-> Operacao logica executada em: " << tempoLogica << " microsegundos.\n";
 
                     historicoIds.push_back(resFinal);
                     historicoNomes.push_back("(" + historicoNomes[id1] + opNome + historicoNomes[id2] + ")");
+                    historicoTempos.push_back(tempoLogica);
                 } else {
                     cout << "[!] IDs invalidos!" << endl;
                 }
             } else if (acao == 4 && !historicoIds.empty()) {
-                int idExport;
-                cout << "Qual ID deseja visualizar? "; cin >> idExport;
+                int idExport = lerInteiro("Qual ID deseja visualizar? ");
 
                 if (idExport >= 0 && idExport < (int)historicoIds.size()) {
                     vector<int>& resultado = historicoIds[idExport];
                     int total = (int)resultado.size();
 
-                    cout << "\n================================================================================" << endl;
+                    cout << "\n[ AVISO: Gerando relatorio e encerrando a aplicacao... ]\n" << endl;
+
+                    cout << "================================================================================" << endl;
                     cout << "   RELATORIO DE BUSCA | Total: " << total << " encontrados" << endl;
                     cout << "   Logica: " << historicoNomes[idExport] << endl;
+                    cout << "   Tempo de processamento deste bloco: " << historicoTempos[idExport] << " us" << endl;
                     cout << "================================================================================" << endl;
 
                     int limite = min(total, 15);
                     for (int i = 0; i < limite; ++i) {
                         int id = resultado[i];
-                        if (opcaoEntidade == 1) { // EXIBIÇÃO DE FILMES
-                            cout << setw(2) << setfill('0') << i + 1 << ". "
-                                 << left << setw(35) << (filmes[id].get_primary_title().substr(0, 34))
+
+                        cout << setw(2) << setfill('0') << i + 1 << ". " << setfill(' ');
+
+                        if (opcaoEntidade == 1) {
+                            cout << left << setw(35) << (filmes[id].get_primary_title().substr(0, 34))
                                  << " | " << filmes[id].get_start_year()
                                  << " | " << setw(10) << filmes[id].get_title_type()
                                  << " | ";
-                            // Extract the vector and print its contents separated by commas
+
                             const vector<string>& genres = filmes[id].get_genres();
                             for (size_t j = 0; j < genres.size(); ++j) {
                                 cout << genres[j] << (j < genres.size() - 1 ? ", " : "");
                             }
                             cout << endl;
-                        } else { // EXIBIÇÃO DE CINEMAS
-                            cout << setw(2) << setfill('0') << i + 1 << ". "
-                                 << left << setw(30) << (cinemas[id].nome_cinema().substr(0, 29))
+                        } else {
+                            cout << left << setw(30) << (cinemas[id].nome_cinema().substr(0, 29))
                                  << " | Preco: R$ " << setw(6) << fixed << setprecision(2) << cinemas[id].preco_ingresso()
                                  << " | Local: (" << cinemas[id].coordenada_x() << "," << cinemas[id].coordenada_y() << ")" << endl;
                         }
@@ -609,6 +624,10 @@ int main() {
                         cout << "-> Exibindo 15 de " << total << " registros. Faltam " << total - 15 << " itens." << endl;
                     }
                     cout << "================================================================================\n" << endl;
+
+                    return 0;
+                } else {
+                    cout << "[!] ID invalido." << endl;
                 }
             }
         }

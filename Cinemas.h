@@ -42,4 +42,4 @@ public:
     void set_filmes_exibicao(const std::vector<int> &filmes_exibicao);
 };
 
-#endif //PROJETO_TBO_CINEMAS_H
+#endif

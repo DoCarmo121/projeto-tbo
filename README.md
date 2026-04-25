@@ -1,57 +1,48 @@
-Documentação Técnica: Sistema de Busca Cinematográfica
+# Guia de Uso: Sistema de Busca Cinematográfica
 
-Este documento descreve o funcionamento e as regras de entrada do sistema de busca desenvolvido em C++. O sistema utiliza mapas de espalhamento (Hash Maps) para indexação e vetores ordenados para operações de conjuntos, garantindo alta performance em bases de dados volumosas.
+Este guia descreve como interagir com o menu do sistema, inserir dados corretamente e aplicar combinações de filtros para realizar buscas na base de dados.
 
-## Arquitetura de Filtragem e Lógica Booleana
+## Regras de Preenchimento
+Para evitar erros de leitura ou falhas no menu, siga rigorosamente as regras abaixo ao digitar os comandos:
 
-O sistema opera através de um acumulador de resultados linear. Isso significa que cada novo filtro aplicado interage com o resultado das operações anteriores.
-
-### Precedência e o Novo Agrupamento de Gêneros
-Para evitar que uma operação de UNIÃO (OR) descarte filtros restritivos aplicados anteriormente (como Ano ou Tipo), o sistema implementa uma lógica de agrupamento interno no filtro de gêneros:
-
-1. Filtro Simples: O usuário define um critério (Ex: Tipo = movie) e o intercala com AND.
-2. Agrupamento Interno (OR Local): Ao selecionar o filtro de gênero, o sistema permite que o usuário defina múltiplos gêneros simultaneamente. O sistema realiza a união desses gêneros *antes* de cruzar com o acumulador principal.
-   - Isso permite realizar buscas como: `(Tipo: tvEpisode AND Ano: 2004) AND (Gênero: Comedy OR Talk-Show)`.
+* **Valores Numéricos:** Utilize apenas números inteiros. Não insira vírgulas ou pontos.
+* **Separação de Múltiplos Valores:** Quando o menu solicitar mais de um valor na mesma linha (como intervalos de ano, duração ou coordenadas), digite o primeiro valor, dê um **espaço em branco**, digite o segundo valor e pressione Enter. Nunca utilize hifens, parênteses ou pontuação.
+* **Sensibilidade a Maiúsculas e Minúsculas:** O sistema é exato na busca por texto:
+    * **Tipos de formato:** Digite tudo em minúsculas (ex: `movie`, `short`, `tvEpisode`).
+    * **Gêneros:** Digite sempre com a primeira letra maiúscula (ex: `Comedy`, `Drama`, `Sci-Fi`).
 
 ---
 
-## Protocolo de Entrada de Dados
+## Navegação e Opções de Busca
 
-O sistema é sensível ao formato dos dados. O descumprimento das regras abaixo pode causar falhas na conversão de tipos (stoi/stof) ou loops no buffer do terminal.
+Ao iniciar o programa, você deverá escolher qual entidade deseja consultar: **1. Filmes** ou **2. Cinemas**. A partir dessa escolha, você entrará na "Área de Trabalho", onde poderá criar e combinar filtros.
 
-### Regras de Formatação
-- Valores Numéricos: Utilize apenas números inteiros. O sistema realiza o arredondamento ou truncamento interno. Não utilize vírgulas ou pontos.
-- Separação de Entradas: Para filtros que exigem múltiplos valores (coordenadas ou intervalos), utilize apenas o Espaço ou a tecla Enter. Nunca utilize parênteses ou símbolos de pontuação.
-- Case Sensitivity: O sistema diferencia maiúsculas de minúsculas conforme o padrão da base:
-   - Atributos de formato (titleType): minúsculos (ex: movie, short, tvEpisode).
-   - Categorias (genres): Iniciais maiúsculas (ex: Comedy, Drama, Sci-Fi).
+### Filtros Disponíveis para Filmes
+Ao criar um novo bloco de busca para Filmes, você pode filtrar por:
+* **Por Tipo:** Busca pelo formato da obra.
+* **Por Gênero:** Permite buscar por um gênero específico. O sistema também oferece a opção de incluir um segundo gênero simultaneamente (ex: obras que sejam de Comédia OU Drama).
+* **Por Duração:** Exige a digitação do limite mínimo e máximo de minutos (separados por espaço).
+* **Por Ano:** Exige o ano inicial e o ano final. Para buscar um ano exato, repita o valor (ex: `2004 2004`).
 
----
-
-## Filtros Disponíveis
-
-### Entidade: Filmes
-- Por Tipo: Filtra pela natureza da obra.
-- Por Gênero (Atualizado): Permite a seleção de um gênero base e a inclusão opcional de um segundo gênero em lógica de união local.
-- Por Duração: Exige limite mínimo e máximo em minutos.
-- Por Ano: Exige ano inicial e final (para ano único, repita o valor).
-
-### Entidade: Cinemas
-- Filtros de Exibição: Localiza estabelecimentos que possuem filmes com Tipo, Gênero, Duração ou Ano específicos em sua grade.
-- Por Distância: Localiza cinemas baseando-se em coordenadas cartesianas (X, Y) e um raio de busca.
-- Por Preço Máximo: Filtra por valor inteiro de ingresso.
-- Por Título: Busca exata por títulos originais ou primários.
+### Filtros Disponíveis para Cinemas
+Ao criar um novo bloco de busca para Cinemas, você pode filtrar por:
+* **Filtros de Exibição:** Localiza cinemas que possuam na sua grade filmes com um determinado Tipo, Gênero, Duração ou Ano.
+* **Por Distância:** Exige a digitação da coordenada X, coordenada Y e a distância máxima (raio), separados por espaços.
+* **Por Preço Máximo:** Busca cinemas com valor de ingresso até o número inteiro estipulado.
+* **Por Título do Filme:** Busca exata pelo nome do filme para encontrar os cinemas que o exibem.
 
 ---
 
-## Exemplo de Fluxo Corrigido
+## Área de Trabalho: Como Combinar Filtros
 
-Para buscar episódios de TV de 2004 que sejam de Comédia ou Talk-Show:
+O menu funciona através de um sistema de "blocos". Cada filtro criado gera um bloco com um ID. Para buscas complexas, você deve cruzar esses blocos.
 
-1. Entidade: Selecionar Filmes.
-2. Primeiro Filtro: Tipo -> "tvEpisode".
-3. Combinação: Selecionar 1 (AND).
-4. Segundo Filtro: Ano -> "2004 2004".
-5. Combinação: Selecionar 1 (AND).
-6. Terceiro Filtro: Gênero -> Definir "Comedy" e, na solicitação de inclusão adicional, definir "Talk-Show".
-7. Finalização: O sistema entregará apenas registros que atendam a todos os critérios cronológicos e de formato, respeitando a alternância de gêneros.
+**Exemplo Passo a Passo:** Buscar episódios de TV de 2004 que sejam de Comédia ou Talk-Show.
+
+1. No Menu Principal, selecione **1 (Filmes)**.
+2. Na Área de Trabalho, escolha **1 (Criar novo filtro base)**. Selecione "Tipo" e digite: `tvEpisode`.
+3. Escolha novamente **1 (Criar novo filtro base)**. Selecione "Ano" e digite: `2004 2004`.
+4. Crie o terceiro filtro base **(Opção 1)**. Selecione "Gênero". Digite `Comedy` e, quando o sistema perguntar pelo gênero adicional, digite `Talk-Show`.
+5. Agora vamos cruzar os dados: Escolha **2 (Combinar com AND)** e informe o ID do bloco do Tipo e o ID do bloco do Ano. O sistema criará um novo bloco resultante dessa junção.
+6. Escolha **2 (Combinar com AND)** novamente. Informe o ID do bloco resultante do passo anterior e o ID do bloco de Gênero.
+7. Com o filtro finalizado, escolha **4 (Ver e Exportar resultados)** e digite o ID do seu último bloco criado. O sistema imprimirá a lista formatada e será encerrado.
