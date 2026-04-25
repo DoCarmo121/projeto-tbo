@@ -13,6 +13,8 @@
 #include <algorithm>
 #include <chrono>
 #include <unordered_set>
+#include <iomanip>
+#include <iterator>
 
 using namespace std;
 
@@ -429,183 +431,167 @@ int main() {
 
     int opcaoEntidade;
     do {
-        cout << "\n=== MENU DE BUSCA ===" << endl;
-        cout << "1. Filtrar Filmes" << endl;
-        cout << "2. Filtrar Cinemas" << endl;
+        cout << "\n=== MENU PRINCIPAL ===" << endl;
+        cout << "O que voce deseja consultar?" << endl;
+        cout << "1. Filmes" << endl;
+        cout << "2. Cinemas" << endl;
         cout << "0. Sair" << endl;
         cout << "Escolha: ";
-        cin >> opcaoEntidade;
+        if (!(cin >> opcaoEntidade)) break;
 
         if (opcaoEntidade == 0) break;
 
-        vector<int> resultadoAtual;
-        bool primeiraBusca = true;
-        int continuar = 1;
+        // Nossa "Area de Trabalho" onde os blocos de consulta vao ficar salvos
+        vector<vector<int>> historicoIds;
+        vector<string> historicoNomes;
+        int acao = -1;
 
-        while (continuar != 0) {
-            int operadorLogico = 1;
-
-            if (!primeiraBusca) {
-                cout << "\nComo deseja combinar o proximo filtro?" << endl;
-                cout << "1. E (AND - Intersecao)" << endl;
-                cout << "2. OU (OR - Uniao)" << endl;
-                cout << "0. Finalizar busca e mostrar resultados" << endl;
-                cout << "Escolha: ";
-                cin >> operadorLogico;
-
-                if (operadorLogico == 0) break;
-                operadorLogico++;
-            }
-
-            vector<int> resultadoTemporario;
-            int opcaoFiltro;
-
-            if (opcaoEntidade == 1) {
-                cout << "\n--- Filtros de Filme ---" << endl;
-                cout << "1. Por Tipo (Ex: movie, short)" << endl;
-                cout << "2. Por Genero" << endl;
-                cout << "3. Por Duracao (min e max)" << endl;
-                cout << "4. Por Ano (min e max, ou iguais para ano especifico)" << endl;
-                cout << "Escolha o filtro: ";
-
-                while (!(cin >> opcaoFiltro)) {
-                    cin.clear();
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                    cout << "[ERRO] Entrada invalida! Digite apenas o NUMERO da opcao: ";
-                }
-
-                if (opcaoFiltro == 1) {
-                    string tipo;
-                    cout << "Digite o tipo: ";
-                    cin >> tipo;
-                    resultadoTemporario = buscarPorTipo(tipo);
-                } else if (opcaoFiltro == 2) {
-                    string genero;
-                    cout << "Digite o genero: ";
-                    cin >> genero;
-                    resultadoTemporario = buscarPorGenero(genero);
-                } else if (opcaoFiltro == 3) {
-                    int min, max;
-                    cout << "Minimo de minutos: "; cin >> min;
-                    cout << "Maximo de minutos: "; cin >> max;
-                    resultadoTemporario = buscarPorIntervaloDuracao(min, max);
-                } else if (opcaoFiltro == 4) {
-                    int min, max;
-                    cout << "Ano inicial: "; cin >> min;
-                    cout << "Ano final: "; cin >> max;
-                    resultadoTemporario = buscarPorIntervaloDeAnos(min, max);
-                }
-
-            } else if (opcaoEntidade == 2) {
-                cout << "\n--- Filtros de Cinema ---" << endl;
-                cout << "1. Por Tipo de Filme em exibicao" << endl;
-                cout << "2. Por Genero de Filme" << endl;
-                cout << "3. Por Intervalo de Duracao do Filme" << endl;
-                cout << "4. Por Distancia (X, Y, MaxDist)" << endl;
-                cout << "5. Por Preco Maximo" << endl;
-                cout << "6. Por Intervalo de Ano do Filme" << endl;
-                cout << "7. Por Titulo Especifico de Filme" << endl;
-                cout << "Escolha o filtro: ";
-
-                while (!(cin >> opcaoFiltro)) {
-                    cin.clear();
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                    cout << "[ERRO] Entrada invalida! Digite apenas o NUMERO do filtro: ";
-                }
-
-                if (opcaoFiltro == 1) {
-                    string tipo;
-                    cout << "Digite o tipo: "; cin >> tipo;
-                    resultadoTemporario = buscarCinemasPorListaFilmes(buscarPorTipo(tipo));
-                } else if (opcaoFiltro == 2) {
-                    string genero;
-                    cout << "Digite o genero: "; cin >> genero;
-                    resultadoTemporario = buscarCinemasPorListaFilmes(buscarPorGenero(genero));
-                } else if (opcaoFiltro == 3) {
-                    int min, max;
-                    cout << "Minimo e Maximo: "; cin >> min >> max;
-                    resultadoTemporario = buscarCinemasPorListaFilmes(buscarPorIntervaloDuracao(min, max));
-                } else if (opcaoFiltro == 4) {
-                    int x, y, dist;
-                    cout << "Coordenada X, Y e Distancia Maxima (separe por espacos): ";
-                    cin >> x >> y >> dist;
-                    if (cin.fail()) {
-                        cin.clear();
-                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                        cout << "Erro na digitacao! Tente novamente sem usar virgulas." << endl;
-                    } else {
-                        resultadoTemporario = buscarCinemasPorDistancia(x, y, dist, cinemas);
-                    }
-                } else if (opcaoFiltro == 5) {
-                    float precoInput;
-                    cout << "Preco maximo: ";
-                    cin >> precoInput;
-                    if (cin.fail()) {
-                        cin.clear();
-                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                        cout << "Entrada invalida! Usando preco = 0 por seguranca." << endl;
-                        precoInput = 0;
-                    }
-                    // AS DUAS LINHAS ABAIXO FORAM CORRIGIDAS:
-                    // Removemos o arredondamento (round/int) e passamos o vetor "cinemas"
-                    resultadoTemporario = buscarAtePreco(precoInput, cinemas);
-                } else if (opcaoFiltro == 6) {
-                    int min, max;
-                    cout << "Ano inicial e final: "; cin >> min >> max;
-                    resultadoTemporario = buscarCinemasPorListaFilmes(buscarPorIntervaloDeAnos(min, max));
-                } else if (opcaoFiltro == 7) {
-                    string titulo;
-                    cout << "Digite o titulo: ";
-                    cin.ignore();
-                    getline(cin, titulo);
-                    resultadoTemporario = buscarCinemasPorTituloFilme(titulo);
-                }
-            }
-
-            auto queryStart = chrono::high_resolution_clock::now();
-
-            if (primeiraBusca) {
-                resultadoAtual = resultadoTemporario;
-                primeiraBusca = false;
-            } else if (operadorLogico == 2) {
-                resultadoAtual = AND_Vectors(resultadoAtual, resultadoTemporario);
-            } else if (operadorLogico == 3) {
-                resultadoAtual = OR_Vectors(resultadoAtual, resultadoTemporario);
-            }
-
-            auto queryEnd = chrono::high_resolution_clock::now();
-            auto queryDuration = chrono::duration_cast<chrono::microseconds>(queryEnd - queryStart);
-
-            cout << "-> Operacao logica executada em: " << queryDuration.count() << " microsegundos." << endl;
-            cout << "-> Registros encontrados ate agora: " << resultadoAtual.size() << "\n" << endl;
-        }
-
-        cout << "\n=== RESULTADO FINAL (" << resultadoAtual.size() << " encontrados) ===" << endl;
-
-        ofstream arquivoSaida("resultado_cpp.txt");
-        if (arquivoSaida.is_open()) {
-            for (int id : resultadoAtual) {
-                if (opcaoEntidade == 1) {
-                    arquivoSaida << filmes[id].get_tconst() << endl;
-                } else {
-                    arquivoSaida << cinemas[id].cinemas_id() << endl;
-                }
-            }
-            arquivoSaida.close();
-            cout << "[!] IDs exportados para 'resultado_cpp.txt' com sucesso." << endl;
-        }
-
-        int limiteImpressao = min((int)resultadoAtual.size(), 15);
-        for (int i = 0; i < limiteImpressao; ++i) {
-            int id = resultadoAtual[i];
-            if (opcaoEntidade == 1) {
-                cout << "- [" << filmes[id].get_tconst() << "] " << filmes[id].get_primary_title() << " (" << filmes[id].get_start_year() << ")" << endl;
+        while (acao != 0) {
+            cout << "\n--- AREA DE TRABALHO (" << (opcaoEntidade == 1 ? "FILMES" : "CINEMAS") << ") ---" << endl;
+            if (historicoIds.empty()) {
+                cout << "Nenhum filtro criado ainda. Comece adicionando blocos base." << endl;
             } else {
-                cout << "- [" << cinemas[id].cinemas_id() << "] " << cinemas[id].nome_cinema() << " (R$ " << cinemas[id].preco_ingresso() << ")" << endl;
+                for (size_t i = 0; i < historicoIds.size(); ++i) {
+                    cout << "[" << i << "] " << historicoNomes[i] << " -> " << historicoIds[i].size() << " itens encontrados" << endl;
+                }
+            }
+
+            cout << "\nOPCOES:" << endl;
+            cout << "1. Criar novo filtro base" << endl;
+            if (historicoIds.size() >= 2) {
+                cout << "2. Combinar dois blocos com AND (Intersecao)" << endl;
+                cout << "3. Combinar dois blocos com OR (Uniao)" << endl;
+            }
+            if (!historicoIds.empty()) {
+                cout << "4. Ver e Exportar resultados de um bloco" << endl;
+            }
+            cout << "0. Voltar ao Menu Principal" << endl;
+            cout << "Escolha: ";
+            cin >> acao;
+
+            if (acao == 1) {
+                int opcaoFiltro;
+                vector<int> resTemp;
+                string nomeTemp;
+
+                if (opcaoEntidade == 1) {
+                    cout << "\n1. Tipo | 2. Genero | 3. Duracao | 4. Ano" << endl;
+                    cout << "Filtro: "; cin >> opcaoFiltro;
+
+                    if (opcaoFiltro == 1) {
+                        string tipo; cout << "Tipo: "; cin >> tipo;
+                        resTemp = buscarPorTipo(tipo); nomeTemp = "Tipo:" + tipo;
+                    } else if (opcaoFiltro == 2) {
+                        string genero; cout << "Genero: "; cin >> genero;
+                        resTemp = buscarPorGenero(genero); nomeTemp = "Gen:" + genero;
+                    } else if (opcaoFiltro == 3) {
+                        int min, max; cout << "Min e Max: "; cin >> min >> max;
+                        resTemp = buscarPorIntervaloDuracao(min, max); nomeTemp = "Duracao:" + to_string(min) + "-" + to_string(max);
+                    } else if (opcaoFiltro == 4) {
+                        int min, max; cout << "Ano Min e Max: "; cin >> min >> max;
+                        resTemp = buscarPorIntervaloDeAnos(min, max); nomeTemp = "Ano:" + to_string(min) + "-" + to_string(max);
+                    }
+                } else if (opcaoEntidade == 2) {
+                    cout << "\n1. Tipo Filme | 2. Genero Filme | 3. Duracao Filme | 4. Distancia | 5. Preco Max | 6. Ano Filme | 7. Titulo Filme" << endl;
+                    cout << "Filtro: "; cin >> opcaoFiltro;
+
+                    if (opcaoFiltro == 1) {
+                        string tipo; cout << "Tipo do filme: "; cin >> tipo;
+                        resTemp = buscarCinemasPorListaFilmes(buscarPorTipo(tipo)); nomeTemp = "Filme Tipo:" + tipo;
+                    } else if (opcaoFiltro == 2) {
+                        string genero; cout << "Genero do filme: "; cin >> genero;
+                        resTemp = buscarCinemasPorListaFilmes(buscarPorGenero(genero)); nomeTemp = "Filme Gen:" + genero;
+                    } else if (opcaoFiltro == 3) {
+                        int min, max; cout << "Min e Max (minutos): "; cin >> min >> max;
+                        resTemp = buscarCinemasPorListaFilmes(buscarPorIntervaloDuracao(min, max)); nomeTemp = "Filme Duracao:" + to_string(min) + "-" + to_string(max);
+                    } else if (opcaoFiltro == 4) {
+                        int x, y, dist; cout << "Coordenadas X, Y e Distancia: "; cin >> x >> y >> dist;
+                        resTemp = buscarCinemasPorDistancia(x, y, dist, cinemas); nomeTemp = "Dist<=" + to_string(dist);
+                    } else if (opcaoFiltro == 5) {
+                        float preco; cout << "Preco maximo: "; cin >> preco;
+                        resTemp = buscarAtePreco(preco, cinemas); nomeTemp = "Preco<=" + to_string(preco).substr(0,4);
+                    } else if (opcaoFiltro == 6) {
+                        int min, max; cout << "Ano Min e Max do filme: "; cin >> min >> max;
+                        resTemp = buscarCinemasPorListaFilmes(buscarPorIntervaloDeAnos(min, max)); nomeTemp = "Filme Ano:" + to_string(min) + "-" + to_string(max);
+                    } else if (opcaoFiltro == 7) {
+                        string titulo; cout << "Titulo exato: "; cin.ignore(); getline(cin, titulo);
+                        resTemp = buscarCinemasPorTituloFilme(titulo); nomeTemp = "Titulo:" + titulo;
+                    }
+                }
+
+                if (!nomeTemp.empty()) {
+                    historicoIds.push_back(resTemp);
+                    historicoNomes.push_back(nomeTemp);
+                }
+
+            } else if ((acao == 2 || acao == 3) && historicoIds.size() >= 2) {
+                int id1, id2;
+                cout << "ID do primeiro bloco: "; cin >> id1;
+                cout << "ID do segundo bloco: "; cin >> id2;
+
+                if (id1 >= 0 && id1 < historicoIds.size() && id2 >= 0 && id2 < historicoIds.size()) {
+                    auto startLogic = chrono::high_resolution_clock::now();
+
+                    vector<int> resFinal;
+                    string opNome = (acao == 2) ? " AND " : " OR ";
+                    if (acao == 2) {
+                        resFinal = AND_Vectors(historicoIds[id1], historicoIds[id2]);
+                    } else {
+                        resFinal = OR_Vectors(historicoIds[id1], historicoIds[id2]);
+                    }
+
+                    auto endLogic = chrono::high_resolution_clock::now();
+                    cout << "-> Operacao logica executada em: " << chrono::duration_cast<chrono::microseconds>(endLogic - startLogic).count() << " microsegundos.\n";
+
+                    historicoIds.push_back(resFinal);
+                    historicoNomes.push_back("(" + historicoNomes[id1] + opNome + historicoNomes[id2] + ")");
+                } else {
+                    cout << "[!] IDs invalidos!" << endl;
+                }
+            } else if (acao == 4 && !historicoIds.empty()) {
+                int idExport;
+                cout << "Qual ID deseja visualizar? "; cin >> idExport;
+
+                if (idExport >= 0 && idExport < (int)historicoIds.size()) {
+                    vector<int>& resultado = historicoIds[idExport];
+                    int total = (int)resultado.size();
+
+                    cout << "\n================================================================================" << endl;
+                    cout << "   RELATORIO DE BUSCA | Total: " << total << " encontrados" << endl;
+                    cout << "   Logica: " << historicoNomes[idExport] << endl;
+                    cout << "================================================================================" << endl;
+
+                    int limite = min(total, 15);
+                    for (int i = 0; i < limite; ++i) {
+                        int id = resultado[i];
+                        if (opcaoEntidade == 1) { // EXIBIÇÃO DE FILMES
+                            cout << setw(2) << setfill('0') << i + 1 << ". "
+                                 << left << setw(35) << (filmes[id].get_primary_title().substr(0, 34))
+                                 << " | " << filmes[id].get_start_year()
+                                 << " | " << setw(10) << filmes[id].get_title_type()
+                                 << " | ";
+                            // Extract the vector and print its contents separated by commas
+                            const vector<string>& genres = filmes[id].get_genres();
+                            for (size_t j = 0; j < genres.size(); ++j) {
+                                cout << genres[j] << (j < genres.size() - 1 ? ", " : "");
+                            }
+                            cout << endl;
+                        } else { // EXIBIÇÃO DE CINEMAS
+                            cout << setw(2) << setfill('0') << i + 1 << ". "
+                                 << left << setw(30) << (cinemas[id].nome_cinema().substr(0, 29))
+                                 << " | Preco: R$ " << setw(6) << fixed << setprecision(2) << cinemas[id].preco_ingresso()
+                                 << " | Local: (" << cinemas[id].coordenada_x() << "," << cinemas[id].coordenada_y() << ")" << endl;
+                        }
+                    }
+
+                    if (total > 15) {
+                        cout << "\n..." << endl;
+                        cout << "-> Exibindo 15 de " << total << " registros. Faltam " << total - 15 << " itens." << endl;
+                    }
+                    cout << "================================================================================\n" << endl;
+                }
             }
         }
-        if (resultadoAtual.size() > 15) cout << "... e mais " << resultadoAtual.size() - 15 << " registros." << endl;
-
     } while (opcaoEntidade != 0);
 
     return 0;
