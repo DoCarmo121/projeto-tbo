@@ -6,9 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include<limits>
-#include<unordered_map>
+#include <limits>
 #include <cmath>
 #include <algorithm>
 #include <chrono>
@@ -20,18 +18,71 @@ using namespace std;
 #include "Cinemas.h"
 #include "FilmesCrop.h"
 
-unordered_map<int, vector<int>> hash_year;
-unordered_map<string, vector<int>> hash_type;
-unordered_map<string, vector<int>> hash_PrimaryTitle;
-unordered_map<string, vector<int>> hash_OriginalTitle;
-unordered_map<bool, vector<int>> hash_IsAdult;
-unordered_map<int, vector<int>> hash_RuntimeMinutes;
-unordered_map<string, vector<int>> hash_Genres;
+template <typename K, typename V>
+class SimpleHashMap {
+private:
+    vector<pair<K, V>> entries;
+    vector<vector<size_t>> buckets;
 
-unordered_map<string, vector<int>> hash_CineName;
-unordered_map<int, vector<int>> hash_TicketPrice;
-unordered_map<int, vector<int>> hash_FilmesExibicao;
-unordered_map<long long, vector<int>> hash_Coordenadas;
+    size_t compute_hash(int key) const { return (size_t)(key >= 0 ? key : -key) % buckets.size(); }
+    size_t compute_hash(long long key) const { return (size_t)(key >= 0 ? key : -key) % buckets.size(); }
+    size_t compute_hash(bool key) const { return key ? 1 : 0; }
+    size_t compute_hash(const string& key) const {
+        size_t h = 0;
+        for (char c : key) h = h * 31 + (unsigned char)c;
+        return h % buckets.size();
+    }
+
+public:
+    SimpleHashMap(size_t num_buckets = 1000003) : buckets(num_buckets) {}
+
+    V& operator[](const K& key) {
+        size_t h = compute_hash(key);
+        for (size_t idx : buckets[h]) {
+            if (entries[idx].first == key) return entries[idx].second;
+        }
+        entries.push_back({key, V()});
+        buckets[h].push_back(entries.size() - 1);
+        return entries.back().second;
+    }
+
+    bool count(const K& key) const {
+        size_t h = compute_hash(key);
+        for (size_t idx : buckets[h]) {
+            if (entries[idx].first == key) return true;
+        }
+        return false;
+    }
+
+    auto begin() -> decltype(entries.begin()) { return entries.begin(); }
+    auto end() -> decltype(entries.end()) { return entries.end(); }
+};
+
+string getNextToken(const string& str, size_t& pos, char delimiter) {
+    if (pos >= str.length()) return "";
+    size_t end = str.find(delimiter, pos);
+    if (end == string::npos) {
+        string token = str.substr(pos);
+        pos = str.length();
+        return token;
+    }
+    string token = str.substr(pos, end - pos);
+    pos = end + 1;
+    return token;
+}
+
+SimpleHashMap<int, vector<int>> hash_year;
+SimpleHashMap<string, vector<int>> hash_type;
+SimpleHashMap<string, vector<int>> hash_PrimaryTitle;
+SimpleHashMap<string, vector<int>> hash_OriginalTitle;
+SimpleHashMap<bool, vector<int>> hash_IsAdult;
+SimpleHashMap<int, vector<int>> hash_RuntimeMinutes;
+SimpleHashMap<string, vector<int>> hash_Genres;
+
+SimpleHashMap<string, vector<int>> hash_CineName;
+SimpleHashMap<int, vector<int>> hash_TicketPrice;
+SimpleHashMap<int, vector<int>> hash_FilmesExibicao;
+SimpleHashMap<long long, vector<int>> hash_Coordenadas;
 
 vector<pair<int, int>> tconstNumParaIndice;
 
@@ -110,11 +161,11 @@ vector<FilmesCrop> lerArquivoFilmes(int& totalValidos) {
     vetorFilmes.reserve(1000000);
 
     while (getline(file, linha)) {
-        stringstream ss(linha);
+        size_t pos = 0;
         string token;
         FilmesCrop filme;
 
-        getline(ss, token, '\t');
+        token = getNextToken(linha, pos, '\t');
         int indice = (parseTconst(token) - 7917518) / 2;
         if (indice < 0) continue;
 
@@ -124,41 +175,41 @@ vector<FilmesCrop> lerArquivoFilmes(int& totalValidos) {
         totalValidos++;
         filme.set_tconst(indice);
 
-        getline(ss, token, '\t');
+        token = getNextToken(linha, pos, '\t');
         filme.set_title_type(token);
         hash_type[token].push_back(indice);
 
-        getline(ss, token, '\t');
+        token = getNextToken(linha, pos, '\t');
         filme.set_primary_title(token);
         hash_PrimaryTitle[token].push_back(indice);
 
-        getline(ss, token, '\t');
+        token = getNextToken(linha, pos, '\t');
         filme.set_original_title(token);
         hash_OriginalTitle[token].push_back(indice);
 
-        getline(ss, token, '\t');
+        token = getNextToken(linha, pos, '\t');
         bool isAdult = (token == "1");
         filme.set_is_adult(isAdult);
         hash_IsAdult[isAdult].push_back(indice);
 
-        getline(ss, token, '\t');
+        token = getNextToken(linha, pos, '\t');
         int year = parseInteger(token);
         filme.set_start_year(year);
         hash_year[year].push_back(indice);
 
-        ss.ignore(numeric_limits<streamsize>::max(), '\t');
+        getNextToken(linha, pos, '\t');
 
-        getline(ss, token, '\t');
+        token = getNextToken(linha, pos, '\t');
         int rTM = parseInteger(token);
         filme.set_runtime_minutes(rTM);
         hash_RuntimeMinutes[rTM].push_back(indice);
 
-        getline(ss, token);
+        token = linha.substr(pos);
         filme.set_genres(token);
         if (token != "\\N" && !token.empty()) {
-            stringstream ssGenre(token);
-            string genre;
-            while (getline(ssGenre, genre, ',')) {
+            size_t posG = 0;
+            while (posG < token.length()) {
+                string genre = getNextToken(token, posG, ',');
                 hash_Genres[genre].push_back(indice);
             }
         }
@@ -199,27 +250,27 @@ vector<Cinemas> lerArquivoCinemas(int& totalCinemas) {
     vetorCinemas.reserve(1000000);
 
     while (getline(file, linha)) {
-        stringstream ss(linha);
+        size_t pos = 0;
         string token;
         Cinemas cinema;
 
-        getline(ss, token, ',');
+        token = getNextToken(linha, pos, ',');
         int indice = parseTconst(token) - 1;
         if (indice < 0) continue;
 
         totalCinemas++;
         cinema.set_cinemas_id(indice);
 
-        getline(ss, token, ',');
+        token = getNextToken(linha, pos, ',');
         cinema.set_nome_cinema(token);
         hash_CineName[token].push_back(indice);
 
-        getline(ss, token, ',');
+        token = getNextToken(linha, pos, ',');
         int x = parseInteger(token);
         cinema.set_coordenada_x(x);
         int xB = x / 1000;
 
-        getline(ss, token, ',');
+        token = getNextToken(linha, pos, ',');
         int y = parseInteger(token);
         cinema.set_coordenada_y(y);
         int yB = y / 1000;
@@ -227,18 +278,17 @@ vector<Cinemas> lerArquivoCinemas(int& totalCinemas) {
         long long chave_grid = (xB * 10000LL) + yB;
         hash_Coordenadas[chave_grid].push_back(indice);
 
-        getline(ss, token, ',');
+        token = getNextToken(linha, pos, ',');
         float price = parseFloat(token);
         cinema.set_preco_ingresso(price);
         hash_TicketPrice[static_cast<int>(round(price))].push_back(indice);
 
-        getline(ss, token);
+        token = linha.substr(pos);
         vector<int> listaFilmesId;
         if (token != "\\N" && !token.empty()) {
-            stringstream ssFilmes(token);
-            string idFilmeStr;
-
-            while (getline(ssFilmes, idFilmeStr, ',')) {
+            size_t posF = 0;
+            while (posF < token.length()) {
+                string idFilmeStr = getNextToken(token, posF, ',');
                 size_t start = idFilmeStr.find_first_not_of(" \r\t");
                 size_t end   = idFilmeStr.find_last_not_of(" \r\t");
                 if (start == string::npos) continue;
@@ -252,7 +302,7 @@ vector<Cinemas> lerArquivoCinemas(int& totalCinemas) {
                                               return a.first < b.first;
                                           });
 
-                    if (it != tconstNumParaIndice.end()) {
+                    if (it != tconstNumParaIndice.end() && it->first == idFilmeNum) {
                         int idFilme = it->second;
                         listaFilmesId.push_back(idFilme);
                         hash_FilmesExibicao[idFilme].push_back(indice);
